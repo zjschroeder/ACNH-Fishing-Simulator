@@ -3,6 +3,7 @@ library(DT)
 library(purrr)
 library(tidyverse)
 library(bslib)
+library(patchwork)
 here::here()
 
 #  --dark-moss-green: #606c38ff;
@@ -344,6 +345,39 @@ ui <- fluidPage(
                )
              )
            ),
+           tabPanel("Simulation Insights",
+                    br(),
+                    fluidRow(
+                      column(12,
+                             h5("Understanding the Monte Carlo Process"),
+                             p("These visualizations show what happened 'under the hood' during simulation:")
+                      )
+                    ),
+                    
+                    fluidRow(
+                      column(6,
+                             h6("Total Fishing Attempts Distribution"),
+                             plotOutput("draws_plot", height = "300px"),
+                             p(style = "font-size: 12px; color: #606c38;", 
+                               "Shows variability in efficiency across successful simulations")
+                      ),
+                      column(6,
+                             h6("Time Periods Used Distribution"), 
+                             plotOutput("columns_plot", height = "300px"),
+                             p(style = "font-size: 12px; color: #606c38;",
+                               "Shows how many different time slots were needed")
+                      )
+                    ),
+                    
+                    fluidRow(
+                      column(12,
+                             h6("Exploration vs Exploitation Analysis"),
+                             plotOutput("exploration_plot", height = "350px"),
+                             p(style = "font-size: 12px; color: #606c38;",
+                               "Shows relationship between exploration choices and efficiency")
+                      )
+                    )
+           ),
            
            # Critterpedia view
            conditionalPanel(
@@ -568,7 +602,7 @@ server <- function(input, output, session) {
   critterpedia_schedule <- reactiveVal(data.frame())
   
   # Handle button click for fish catching optimization
-  # Handle button click for fish catching optimization
+
   observeEvent(input$analyze_btn, {
     current_data <- filtered_data()
     
@@ -595,19 +629,27 @@ server <- function(input, output, session) {
       size = "s"
     ))
     
-    # Show processing message in analysis output too
+    # Show processing message
     output$analysis_output <- renderText({
       "Gone fishin' (simulating...)"
     })
     
     # Run optimization (wrapped in tryCatch for error handling)
     tryCatch({
-      result <- optimize_fish_catching(
+      result <- optimize_fish_catching_with_viz_data(
         current_data,
         N = input$N,
         exploration_weight = input$exploration_weight,
         column_minimization_weight = input$column_minimization_weight
       )
+      
+      # Create visualizations
+      viz_plots <- create_monte_carlo_visualizations(result)
+      
+      # Store plots for rendering
+      output$draws_plot <- renderPlot({ viz_plots$draws_histogram })
+      output$exploration_plot <- renderPlot({ viz_plots$exploration_effect })
+      output$columns_plot <- renderPlot({ viz_plots$columns_histogram })
       
       optimal_times <- result$best_solution$columns_used
       schedule <- create_optimal_fishing_schedule(
@@ -696,7 +738,8 @@ server <- function(input, output, session) {
     })
   })
   
-  # Render the location-specific tables with 80 entries per page
+  
+  # Location-specific tables
   output$river_table <- DT::renderDataTable({
     if (nrow(river_schedule()) > 0) {
       DT::datatable(river_schedule(), 
