@@ -216,6 +216,54 @@ ui <- fluidPage(
       .info-icon:hover {
         color: var(--dark-moss-green);
       }
+      
+            /* Loading modal styling */
+      .loading-modal .modal-content {
+        background-color: var(--cornsilk);
+        border: 3px solid var(--dark-moss-green);
+        border-radius: 15px;
+        text-align: center;
+      }
+      
+      .loading-modal .modal-header {
+        background-color: var(--dark-moss-green);
+        color: var(--cornsilk);
+        border-bottom: 2px solid var(--tigers-eye);
+        border-radius: 12px 12px 0 0;
+      }
+      
+      .loading-modal .modal-body {
+        padding: 40px;
+        color: var(--pakistan-green);
+      }
+      
+      .loading-modal .close {
+        display: none; /* Hide the close button */
+      }
+      
+      /* Spinner animation */
+      .spinner {
+        border: 4px solid var(--earth-yellow);
+        border-top: 4px solid var(--dark-moss-green);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      .loading-text {
+        font-size: 18px;
+        font-weight: bold;
+        color: var(--pakistan-green);
+        margin-top: 15px;
+      }
+      
     ")),
     tags$script(HTML("
       $(function () {
@@ -520,6 +568,7 @@ server <- function(input, output, session) {
   critterpedia_schedule <- reactiveVal(data.frame())
   
   # Handle button click for fish catching optimization
+  # Handle button click for fish catching optimization
   observeEvent(input$analyze_btn, {
     current_data <- filtered_data()
     
@@ -532,7 +581,21 @@ server <- function(input, output, session) {
       return()
     }
     
-    # Show processing message
+    # Show loading modal
+    showModal(modalDialog(
+      div(class = "loading-modal",
+          div(class = "spinner"),
+          div(class = "loading-text", "Gone fishin'..."),
+          div(style = "margin-top: 10px; color: var(--tigers-eye); font-size: 14px;", 
+              paste("Running", input$N, "simulations"))),
+      title = div(style = "text-align: center; font-weight: bold;", "🎣 Optimizing Fish Catching 🎣"),
+      footer = NULL,
+      easyClose = FALSE,
+      fade = TRUE,
+      size = "s"
+    ))
+    
+    # Show processing message in analysis output too
     output$analysis_output <- renderText({
       "Gone fishin' (simulating...)"
     })
@@ -619,11 +682,17 @@ server <- function(input, output, session) {
         )
       })
       
+      # Remove loading modal on success
+      removeModal()
+      
     }, error = function(e) {
       output$analysis_output <- renderText({
         paste("Error in optimization:", e$message)
       })
       analysis_complete(FALSE)
+      
+      # Remove loading modal on error
+      removeModal()
     })
   })
   
