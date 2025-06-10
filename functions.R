@@ -448,7 +448,8 @@ summarize_fishing_schedule <- function(schedule_df, by_location = TRUE, by_time 
 optimize_fish_catching_with_viz_data <- function(df, 
                                                  N = 10000,
                                                  exploration_weight = 0.3,
-                                                 column_minimization_weight = 0.5) {
+                                                 column_minimization_weight = 0.5,
+                                                 emergency_brake = 10000) {
   
   dt <- as.data.table(df)
   
@@ -510,7 +511,7 @@ optimize_fish_catching_with_viz_data <- function(df,
   exploration_threshold <- exploration_weight
   col_penalty <- column_minimization_weight * 0.1
   scale_factor <- 50
-  max_attempts <- 1000
+  # max_attempts <- 1000  # REMOVE THIS LINE COMPLETELY
   
   # Main simulation
   for (sim in seq_len(N)) {
@@ -529,9 +530,12 @@ optimize_fish_catching_with_viz_data <- function(df,
     attempt <- 0L
     n_caught <- 0L
     
-    while (n_caught < n_fish && attempt < max_attempts) {
+    while (n_caught < n_fish) {  
       attempt <- attempt + 1L
-      
+      if (attempt > emergency_brake) {
+        cat("Simulation", sim, "exceeded", emergency_brake, "attempts - emergency brake activated\n")
+        break
+      }
       # Column selection
       if (runif(1) < exploration_threshold || sum(columns_used) == 0) {
         exploration_count <- exploration_count + 1L

@@ -468,7 +468,6 @@ ui <- fluidPage(
                       tabsetPanel(
                         id = "optimization_tabs",
                         
-                        # Parameters tab
                         tabPanel("Parameters",
                                  br(),
                                  div(
@@ -505,6 +504,19 @@ ui <- fluidPage(
                                                max = 1.0, 
                                                value = 0.5, 
                                                step = 0.01)
+                                 ),
+                                 
+                                 # ADD THIS NEW INPUT:
+                                 div(
+                                   numericInput("emergency_brake", 
+                                                span("Emergency Brake",
+                                                     span(`data-toggle` = "tooltip", `data-placement` = "right",
+                                                          title = "Maximum attempts per simulation before giving up. Higher values ensure all simulations succeed but may be very slow for difficult problems.",
+                                                          icon("info-circle", class = "info-icon"))),
+                                                value = 10000, 
+                                                min = 1000, 
+                                                max = 100000, 
+                                                step = 1000)
                                  ),
                                  
                                  br(),
@@ -640,7 +652,8 @@ server <- function(input, output, session) {
         current_data,
         N = input$N,
         exploration_weight = input$exploration_weight,
-        column_minimization_weight = input$column_minimization_weight
+        column_minimization_weight = input$column_minimization_weight,
+        emergency_brake = input$emergency_brake  
       )
       
       # Create visualizations
@@ -712,7 +725,8 @@ server <- function(input, output, session) {
           paste("Parameters used:"),
           paste("- Total draws:", input$N),
           paste("- Exploration Weight:", input$exploration_weight),
-          paste("-  Minimization Weight:", input$column_minimization_weight),
+          paste("- Minimization Weight:", input$column_minimization_weight),
+          paste("- Emergency Brake:", input$emergency_brake),  # ADD THIS LINE
           paste(""),
           paste("Results:"),
           paste("- Total fish caught:", nrow(current_data)),
@@ -720,6 +734,7 @@ server <- function(input, output, session) {
           paste("- Ocean fish:", nrow(ocean_data)), 
           paste("- Pond fish:", nrow(pond_data)),
           paste("- Optimal times selected:", length(optimal_times)),
+          paste("- Success rate:", round(result$summary_stats$success_rate * 100, 1), "%"),  # ADD THIS LINE
           sep = "\n"
         )
       })
