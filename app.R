@@ -4,6 +4,7 @@ library(purrr)
 library(tidyverse)
 library(bslib)
 library(patchwork)
+library(later)
 here::here()
 
 #  --dark-moss-green: #606c38ff;
@@ -265,6 +266,8 @@ ui <- fluidPage(
         margin-top: 15px;
       }
       
+      
+      
     ")),
     tags$script(HTML("
       $(function () {
@@ -277,160 +280,111 @@ ui <- fluidPage(
   
   fluidRow(
     # Left sidebar: fish selection
-    column(4,
-           h4("What're we catching?"),
-           
-           # Radio buttons to choose sorting method
-           radioButtons("sorting_method", 
-                        "Sort fish by:",
-                        choices = list("Location" = "location", 
-                                       "Critterpedia" = "critterpedia"),
-                        selected = "location"),
-           
-           # Conditional panels based on sorting method
-           conditionalPanel(
-             condition = "input.sorting_method == 'location'",
-             tabsetPanel(
-               id = "fish_tabs",
+    column(3,
+           div(class = "fish-selection-box",
+               h4("What're we catching?"),
                
-               # River Fish Tab
-               tabPanel("River Fish",
-                        br(),
-                        fluidRow(
-                          column(6, actionButton("select_all_river", "Select All", 
-                                                 class = "btn-default btn-sm")),
-                          column(6, actionButton("deselect_all_river", "Deselect All", 
-                                                 class = "btn-default btn-sm"))
-                        ),
-                        br(),
-                        checkboxGroupInput("river_fish", 
-                                           NULL,
-                                           choices = setNames(df$name[df$location == "River"], 
-                                                              df$full_name[df$location == "River"]),
-                                           selected = df$name[df$location == "River"])
-               ),
-               
-               # Ocean Fish Tab
-               tabPanel("Ocean Fish",
-                        br(),
-                        fluidRow(
-                          column(6, actionButton("select_all_ocean", "Select All", 
-                                                 class = "btn-default btn-sm")),
-                          column(6, actionButton("deselect_all_ocean", "Deselect All", 
-                                                 class = "btn-default btn-sm"))
-                        ),
-                        br(),
-                        checkboxGroupInput("ocean_fish", 
-                                           NULL,
-                                           choices = setNames(df$name[df$location == "Ocean"], 
-                                                              df$full_name[df$location == "Ocean"]),
-                                           selected = df$name[df$location == "Ocean"])
-               ),
-               
-               # Pond Fish Tab
-               tabPanel("Pond Fish",
-                        br(),
-                        fluidRow(
-                          column(6, actionButton("select_all_pond", "Select All", 
-                                                 class = "btn-default btn-sm")),
-                          column(6, actionButton("deselect_all_pond", "Deselect All", 
-                                                 class = "btn-default btn-sm"))
-                        ),
-                        br(),
-                        checkboxGroupInput("pond_fish", 
-                                           NULL,
-                                           choices = setNames(df$name[df$location == "Pond"], 
-                                                              df$full_name[df$location == "Pond"]),
-                                           selected = df$name[df$location == "Pond"])
+               # Single tabsetPanel with all fish selection options
+               tabsetPanel(
+                 id = "fish_tabs",
+                 
+                 # River Fish Tab
+                 tabPanel("River Fish",
+                          br(),
+                          fluidRow(
+                            column(6, actionButton("select_all_river", "Select All", 
+                                                   class = "btn-default btn-sm")),
+                            column(6, actionButton("deselect_all_river", "Deselect All", 
+                                                   class = "btn-default btn-sm"))
+                          ),
+                          br(),
+                          checkboxGroupInput("river_fish", 
+                                             NULL,
+                                             choices = setNames(df$name[df$location_collapsed == "River"], 
+                                                                df_full$full_name[match(df$name[df$location_collapsed == "River"], df_full$name)]),
+                                             selected = df$name[df$location_collapsed == "River"])
+                 ),
+                 
+                 # Ocean Fish Tab
+                 tabPanel("Ocean Fish",
+                          br(),
+                          fluidRow(
+                            column(6, actionButton("select_all_ocean", "Select All", 
+                                                   class = "btn-default btn-sm")),
+                            column(6, actionButton("deselect_all_ocean", "Deselect All", 
+                                                   class = "btn-default btn-sm"))
+                          ),
+                          br(),
+                          checkboxGroupInput("ocean_fish", 
+                                             NULL,
+                                             choices = setNames(df$name[df$location_collapsed == "Ocean"], 
+                                                                df_full$full_name[match(df$name[df$location_collapsed == "Ocean"], df_full$name)]),
+                                             selected = df$name[df$location_collapsed == "Ocean"])
+                 ),
+                 
+                 # Pond Fish Tab
+                 tabPanel("Pond Fish",
+                          br(),
+                          fluidRow(
+                            column(6, actionButton("select_all_pond", "Select All", 
+                                                   class = "btn-default btn-sm")),
+                            column(6, actionButton("deselect_all_pond", "Deselect All", 
+                                                   class = "btn-default btn-sm"))
+                          ),
+                          br(),
+                          checkboxGroupInput("pond_fish", 
+                                             NULL,
+                                             choices = setNames(df$name[df$location_collapsed == "Pond"], 
+                                                                df_full$full_name[match(df$name[df$location_collapsed == "Pond"], df_full$name)]),
+                                             selected = df$name[df$location_collapsed == "Pond"])
+                 ),
+                 
+                 # Critterpedia Tab (moved here as 4th tab)
+                 tabPanel("Critterpedia",
+                          br(),
+                          fluidRow(
+                            column(6, actionButton("select_all_critterpedia", "Select All", 
+                                                   class = "btn-default btn-sm")),
+                            column(6, actionButton("deselect_all_critterpedia", "Deselect All", 
+                                                   class = "btn-default btn-sm"))
+                          ),
+                          br(),
+                          checkboxGroupInput("critterpedia_fish", 
+                                             NULL,
+                                             choices = setNames(df_full$name[order(df_full$pos_number)], 
+                                                                df_full$full_name[order(df_full$pos_number)]),
+                                             selected = df_full$name[order(df_full$pos_number)])
+                 )
                )
-             )
-           ),
-           tabPanel("Simulation Insights",
-                    br(),
-                    fluidRow(
-                      column(12,
-                             h5("Understanding the Monte Carlo Process"),
-                             p("These visualizations show what happened 'under the hood' during simulation:")
-                      )
-                    ),
-                    
-                    fluidRow(
-                      column(6,
-                             h6("Total Fishing Attempts Distribution"),
-                             plotOutput("draws_plot", height = "300px"),
-                             p(style = "font-size: 12px; color: #606c38;", 
-                               "Shows variability in efficiency across successful simulations")
-                      ),
-                      column(6,
-                             h6("Time Periods Used Distribution"), 
-                             plotOutput("columns_plot", height = "300px"),
-                             p(style = "font-size: 12px; color: #606c38;",
-                               "Shows how many different time slots were needed")
-                      )
-                    ),
-                    
-                    fluidRow(
-                      column(12,
-                             h6("Exploration vs Exploitation Analysis"),
-                             plotOutput("exploration_plot", height = "350px"),
-                             p(style = "font-size: 12px; color: #606c38;",
-                               "Shows relationship between exploration choices and efficiency")
-                      )
-                    )
-           ),
-           
-           # Critterpedia view
-           conditionalPanel(
-             condition = "input.sorting_method == 'critterpedia'",
-             br(),
-             fluidRow(
-               column(6, actionButton("select_all_critterpedia", "Select All", 
-                                      class = "btn-default btn-sm")),
-               column(6, actionButton("deselect_all_critterpedia", "Deselect All", 
-                                      class = "btn-default btn-sm"))
-             ),
-             br(),
-             checkboxGroupInput("critterpedia_fish", 
-                                NULL,
-                                choices = setNames(df_full$name[order(df_full$pos_number)], 
-                                                   df_full$full_name[order(df_full$pos_number)]),
-                                selected = df_full$name[order(df_full$pos_number)])
            )
     ),
     
+    
     # Right column
-    column(8,
-           # Results tables
-           fluidRow(
-             column(12,
-                    h4("Optimal Fishing Dates"),
-                    
-                    # Placeholder
-                    conditionalPanel(
-                      condition = "output.analysis_complete == false || output.analysis_complete == null",
-                      div(
-                        class = "placeholder-content",
-                        style = "text-align: center; padding: 50px;",
-                        h5("Run optimization to see results"),
-                        p("Select fish from the left panel and configure optimization parameters below, then click 'Optimize Fish Catching' to generate schedules.")
-                      )
-                    ),
-                    
-                    # Results tables with display options
-                    conditionalPanel(
-                      condition = "output.analysis_complete == true",
+    column(6,
+           # Top-level tabs for results and visualizations
+           tabsetPanel(
+             id = "main_results_tabs",
+             
+             tabPanel("Optimal Fishing Dates",
+                      br(),
                       
-                      # Radio buttons to choose display method
-                      radioButtons("table_display_method", 
-                                   "Display results by:",
-                                   choices = list("Location" = "location", 
-                                                  "Critterpedia Order" = "critterpedia"),
-                                   selected = "location",
-                                   inline = TRUE),
-                      
-                      # Location-based tabs
+                      # Placeholder
                       conditionalPanel(
-                        condition = "input.table_display_method == 'location'",
+                        condition = "output.analysis_complete == false || output.analysis_complete == null",
+                        div(
+                          class = "placeholder-content",
+                          style = "text-align: center; padding: 50px;",
+                          h5("Run optimization to see results"),
+                          p("Select fish from the left panel and configure optimization parameters below, then click 'Optimize Fish Catching' to generate schedules.")
+                        )
+                      ),
+                      
+                      # Results tables - SIMPLIFIED STRUCTURE
+                      conditionalPanel(
+                        condition = "output.analysis_complete == true",
+                        
+                        # Single tabsetPanel with all schedule types
                         tabsetPanel(
                           id = "results_tabs",
                           
@@ -447,27 +401,78 @@ ui <- fluidPage(
                           tabPanel("Pond Schedule",
                                    br(),
                                    DT::dataTableOutput("pond_table")
+                          ),
+                          
+                          tabPanel("Critterpedia Schedule",
+                                   br(),
+                                   DT::dataTableOutput("critterpedia_table")
                           )
+                        )
+                      )
+             ),
+             
+             # Tab 2: Understanding the Monte Carlo Process (moved here)
+             tabPanel("Monte Carlo Insights",
+                      br(),
+                      
+                      # Only show if analysis is complete
+                      conditionalPanel(
+                        condition = "output.analysis_complete == false || output.analysis_complete == null",
+                        div(
+                          class = "placeholder-content",
+                          style = "text-align: center; padding: 50px;",
+                          h5("Run optimization to see simulation insights"),
+                          p("These visualizations will show what happens 'under the hood' during the Monte Carlo simulation process.")
                         )
                       ),
                       
-                      # Critterpedia order single table
                       conditionalPanel(
-                        condition = "input.table_display_method == 'critterpedia'",
-                        br(),
-                        DT::dataTableOutput("critterpedia_table")
+                        condition = "output.analysis_complete == true",
+                        fluidRow(
+                          column(12,
+                                 h5("Understanding the Monte Carlo Process"),
+                                 p("These visualizations show what happened 'under the hood' during simulation:")
+                          )
+                        ),
+                        
+                        fluidRow(
+                          column(6,
+                                 h6("Total Fishing Attempts Distribution"),
+                                 plotOutput("draws_plot", height = "300px"),
+                                 p(style = "font-size: 12px; color: #606c38;", 
+                                   "Shows variability in efficiency across successful simulations")
+                          ),
+                          column(6,
+                                 h6("Time Periods Used Distribution"), 
+                                 plotOutput("columns_plot", height = "300px"),
+                                 p(style = "font-size: 12px; color: #606c38;",
+                                   "Shows how many different time slots were needed")
+                          )
+                        ),
+                        
+                        fluidRow(
+                          column(12,
+                                 h6("Exploration vs Exploitation Analysis"),
+                                 plotOutput("exploration_plot", height = "350px"),
+                                 p(style = "font-size: 12px; color: #606c38;",
+                                   "Shows relationship between exploration choices and efficiency")
+                          )
+                        )
                       )
-                    )
+             ),
+             # Analysis Results tab
+             tabPanel("Analysis Results",
+                      br(),
+                      verbatimTextOutput("analysis_output")
              )
-           ),
-           
-           # Optimization parameters (moved below tables)
-           fluidRow(
-             column(12,
-                    wellPanel(
+           )
+    ),
+    column(3,
+           wellPanel(
                       tabsetPanel(
                         id = "optimization_tabs",
                         
+                        # Parameters tab
                         tabPanel("Parameters",
                                  br(),
                                  div(
@@ -506,7 +511,6 @@ ui <- fluidPage(
                                                step = 0.01)
                                  ),
                                  
-                                 # ADD THIS NEW INPUT:
                                  div(
                                    numericInput("emergency_brake", 
                                                 span("Emergency Brake",
@@ -524,18 +528,10 @@ ui <- fluidPage(
                                  actionButton("analyze_btn", 
                                               "Optimize Fish Catching", 
                                               class = "btn-primary btn-block")
-                        ),
-                        
-                        # Analysis Results tab
-                        tabPanel("Analysis Results",
-                                 br(),
-                                 verbatimTextOutput("analysis_output")
                         )
                       )
                     )
              )
-           )
-    )
   )
 )
 
@@ -551,61 +547,159 @@ server <- function(input, output, session) {
   })
   outputOptions(output, "analysis_complete", suspendWhenHidden = FALSE)
   
-  # Select/Deselect all buttons for River
-  observeEvent(input$select_all_river, {
-    updateCheckboxGroupInput(session, "river_fish", 
-                             selected = df$name[df$location == "River"])
-  })
+  # Flag to prevent infinite loops during programmatic updates
+  programmatic_update <- reactiveVal(FALSE)
   
-  observeEvent(input$deselect_all_river, {
-    updateCheckboxGroupInput(session, "river_fish", selected = character(0))
-  })
+  # Helper function to safely update checkboxes
+  safe_update <- function(input_id, selected_values) {
+    programmatic_update(TRUE)
+    updateCheckboxGroupInput(session, input_id, selected = selected_values)
+    # Use invalidateLater to reset the flag after a short delay
+    invalidateLater(100, session)
+    later::later(function() {
+      programmatic_update(FALSE)
+    }, delay = 0.1)
+  }
   
-  # Select/Deselect all buttons for Ocean
-  observeEvent(input$select_all_ocean, {
-    updateCheckboxGroupInput(session, "ocean_fish", 
-                             selected = df$name[df$location == "Ocean"])
-  })
-  
-  observeEvent(input$deselect_all_ocean, {
-    updateCheckboxGroupInput(session, "ocean_fish", selected = character(0))
-  })
-  
-  # Select/Deselect all buttons for Pond
-  observeEvent(input$select_all_pond, {
-    updateCheckboxGroupInput(session, "pond_fish", 
-                             selected = df$name[df$location == "Pond"])
-  })
-  
-  observeEvent(input$deselect_all_pond, {
-    updateCheckboxGroupInput(session, "pond_fish", selected = character(0))
-  })
-  
-  # Select/Deselect all buttons for Critterpedia
+  # CRITTERPEDIA SELECT/DESELECT BUTTONS
   observeEvent(input$select_all_critterpedia, {
-    updateCheckboxGroupInput(session, "critterpedia_fish", 
-                             selected = df_full$name[order(df_full$pos_number)])
+    all_fish <- df_full$name[order(df_full$pos_number)]
+    safe_update("critterpedia_fish", all_fish)
+    
+    # Also update location tabs
+    safe_update("river_fish", df$name[df$location_collapsed == "River"])
+    safe_update("ocean_fish", df$name[df$location_collapsed == "Ocean"])
+    safe_update("pond_fish", df$name[df$location_collapsed == "Pond"])
   })
   
   observeEvent(input$deselect_all_critterpedia, {
-    updateCheckboxGroupInput(session, "critterpedia_fish", selected = character(0))
+    safe_update("critterpedia_fish", character(0))
+    safe_update("river_fish", character(0))
+    safe_update("ocean_fish", character(0))
+    safe_update("pond_fish", character(0))
   })
+  
+  # LOCATION SELECT/DESELECT BUTTONS  
+  observeEvent(input$select_all_river, {
+    river_fish <- df$name[df$location_collapsed == "River"]
+    safe_update("river_fish", river_fish)
+    
+    # Update critterpedia to include these fish
+    current_critterpedia <- isolate(input$critterpedia_fish)
+    new_critterpedia <- unique(c(current_critterpedia, river_fish))
+    safe_update("critterpedia_fish", new_critterpedia)
+  })
+  
+  observeEvent(input$deselect_all_river, {
+    river_fish <- df$name[df$location_collapsed == "River"]
+    safe_update("river_fish", character(0))
+    
+    # Remove river fish from critterpedia
+    current_critterpedia <- isolate(input$critterpedia_fish)
+    new_critterpedia <- setdiff(current_critterpedia, river_fish)
+    safe_update("critterpedia_fish", new_critterpedia)
+  })
+  
+  observeEvent(input$select_all_ocean, {
+    ocean_fish <- df$name[df$location_collapsed == "Ocean"]
+    safe_update("ocean_fish", ocean_fish)
+    
+    current_critterpedia <- isolate(input$critterpedia_fish)
+    new_critterpedia <- unique(c(current_critterpedia, ocean_fish))
+    safe_update("critterpedia_fish", new_critterpedia)
+  })
+  
+  observeEvent(input$deselect_all_ocean, {
+    ocean_fish <- df$name[df$location_collapsed == "Ocean"]
+    safe_update("ocean_fish", character(0))
+    
+    current_critterpedia <- isolate(input$critterpedia_fish)
+    new_critterpedia <- setdiff(current_critterpedia, ocean_fish)
+    safe_update("critterpedia_fish", new_critterpedia)
+  })
+  
+  observeEvent(input$select_all_pond, {
+    pond_fish <- df$name[df$location_collapsed == "Pond"]
+    safe_update("pond_fish", pond_fish)
+    
+    current_critterpedia <- isolate(input$critterpedia_fish)
+    new_critterpedia <- unique(c(current_critterpedia, pond_fish))
+    safe_update("critterpedia_fish", new_critterpedia)
+  })
+  
+  observeEvent(input$deselect_all_pond, {
+    pond_fish <- df$name[df$location_collapsed == "Pond"]
+    safe_update("pond_fish", character(0))
+    
+    current_critterpedia <- isolate(input$critterpedia_fish)
+    new_critterpedia <- setdiff(current_critterpedia, pond_fish)
+    safe_update("critterpedia_fish", new_critterpedia)
+  })
+  
+  # BIDIRECTIONAL SYNCHRONIZATION (with proper debouncing)
+  
+  # Sync: Location tabs → Critterpedia
+  # Use debounce to prevent rapid-fire updates
+  location_changes <- reactive({
+    c(input$river_fish, input$ocean_fish, input$pond_fish)
+  })
+  
+  location_changes_debounced <- debounce(location_changes, 200)  # 200ms delay
+  
+  observeEvent(location_changes_debounced(), {
+    if (!programmatic_update()) {
+      new_selection <- location_changes_debounced()
+      current_critterpedia <- isolate(input$critterpedia_fish)
+      
+      if (!setequal(new_selection, current_critterpedia)) {
+        safe_update("critterpedia_fish", new_selection)
+      }
+    }
+  }, ignoreInit = TRUE)
+  
+  # Sync: Critterpedia → Location tabs
+  critterpedia_changes_debounced <- debounce(reactive(input$critterpedia_fish), 200)
+  
+  observeEvent(critterpedia_changes_debounced(), {
+    if (!programmatic_update()) {
+      selected_fish <- critterpedia_changes_debounced()
+      
+      # Calculate what should be selected in each location
+      river_should_be <- intersect(selected_fish, df$name[df$location_collapsed == "River"])
+      ocean_should_be <- intersect(selected_fish, df$name[df$location_collapsed == "Ocean"])
+      pond_should_be <- intersect(selected_fish, df$name[df$location_collapsed == "Pond"])
+      
+      # Update only if different
+      if (!setequal(river_should_be, isolate(input$river_fish))) {
+        safe_update("river_fish", river_should_be)
+      }
+      if (!setequal(ocean_should_be, isolate(input$ocean_fish))) {
+        safe_update("ocean_fish", ocean_should_be)
+      }
+      if (!setequal(pond_should_be, isolate(input$pond_fish))) {
+        safe_update("pond_fish", pond_should_be)
+      }
+    }
+  }, ignoreInit = TRUE)
+  
   
   # Reactive expression for filtered data
   filtered_data <- reactive({
-    if (input$sorting_method == "location") {
-      selected_fish <- c(input$river_fish, input$ocean_fish, input$pond_fish)
-    } else {
-      selected_fish <- input$critterpedia_fish
-    }
+    # Combine all selected fish from all tabs
+    selected_fish <- c(input$river_fish, input$ocean_fish, 
+                       input$pond_fish, input$critterpedia_fish)
+    # Remove duplicates
+    selected_fish <- unique(selected_fish)
     
     if (length(selected_fish) == 0) {
       return(data.frame()) # Return empty dataframe if no fish selected
     }
     
+    # Use df to ensure we have the right columns
     filtered_df <- df[df$name %in% selected_fish, ]
     return(filtered_df)
   })
+  
   
   # Reactive values to store schedule data
   river_schedule <- reactiveVal(data.frame())
@@ -705,9 +799,16 @@ server <- function(input, output, session) {
         critterpedia_data$name <- critterpedia_data$full_name
         critterpedia_data <- critterpedia_data[, !names(critterpedia_data) %in% "full_name"]
       }
-      # Sort by pos_number
-      pos_order <- match(schedule$name, df_full$name)  # Use original schedule for matching
-      critterpedia_data <- critterpedia_data[order(df_full$pos_number[pos_order]), ]
+      
+      # Create a mapping from fish names to pos_numbers
+      name_to_pos <- setNames(df_full$pos_number, df_full$name)
+      
+      # Get pos_numbers for fish in our schedule (using original names before display transformation)
+      original_names <- schedule$name
+      pos_numbers <- name_to_pos[original_names]
+      
+      # Sort critterpedia_data by pos_number
+      critterpedia_data <- critterpedia_data[order(pos_numbers, na.last = TRUE), ]
       
       # Update the schedule data
       river_schedule(river_data)
