@@ -23,7 +23,7 @@ if (file.exists("functions.R")) {
 }
 
 # Import data
-df <- rio::import(here::here("data/fish_simple.csv"))
+df <- rio::import(here::here("data/data.csv"))
 # Don't remove pos_number for the Critterpedia view
 df_full <- df  # Keep full data with pos_number
 df <- df %>% 
@@ -280,6 +280,7 @@ ui <- fluidPage(
   
   fluidRow(
     # Left sidebar: fish selection
+    # Left sidebar: fish selection
     column(3,
            div(class = "fish-selection-box",
                h4("What're we catching?"),
@@ -289,12 +290,14 @@ ui <- fluidPage(
                  id = "fish_tabs",
                  
                  # River Fish Tab
-                 tabPanel("River Fish",
+                 tabPanel("River",
                           br(),
                           fluidRow(
-                            column(6, actionButton("select_all_river", "Select All", 
+                            column(6, actionButton("select_all_river", 
+                                                   "Select All", 
                                                    class = "btn-default btn-sm")),
-                            column(6, actionButton("deselect_all_river", "Deselect All", 
+                            column(6, actionButton("deselect_all_river", 
+                                                   "Deselect All", 
                                                    class = "btn-default btn-sm"))
                           ),
                           br(),
@@ -305,25 +308,8 @@ ui <- fluidPage(
                                              selected = df$name[df$location_collapsed == "River"])
                  ),
                  
-                 # Ocean Fish Tab
-                 tabPanel("Ocean Fish",
-                          br(),
-                          fluidRow(
-                            column(6, actionButton("select_all_ocean", "Select All", 
-                                                   class = "btn-default btn-sm")),
-                            column(6, actionButton("deselect_all_ocean", "Deselect All", 
-                                                   class = "btn-default btn-sm"))
-                          ),
-                          br(),
-                          checkboxGroupInput("ocean_fish", 
-                                             NULL,
-                                             choices = setNames(df$name[df$location_collapsed == "Ocean"], 
-                                                                df_full$full_name[match(df$name[df$location_collapsed == "Ocean"], df_full$name)]),
-                                             selected = df$name[df$location_collapsed == "Ocean"])
-                 ),
-                 
                  # Pond Fish Tab
-                 tabPanel("Pond Fish",
+                 tabPanel("Pond",
                           br(),
                           fluidRow(
                             column(6, actionButton("select_all_pond", "Select All", 
@@ -339,21 +325,79 @@ ui <- fluidPage(
                                              selected = df$name[df$location_collapsed == "Pond"])
                  ),
                  
-                 # Critterpedia Tab (moved here as 4th tab)
-                 tabPanel("Critterpedia",
+                 # Ocean Fish Tab
+                 tabPanel("Ocean",
                           br(),
                           fluidRow(
-                            column(6, actionButton("select_all_critterpedia", "Select All", 
+                            column(6, actionButton("select_all_ocean", "Select All", 
                                                    class = "btn-default btn-sm")),
-                            column(6, actionButton("deselect_all_critterpedia", "Deselect All", 
+                            column(6, actionButton("deselect_all_ocean", "Deselect All", 
                                                    class = "btn-default btn-sm"))
                           ),
                           br(),
-                          checkboxGroupInput("critterpedia_fish", 
+                          checkboxGroupInput("ocean_fish", 
                                              NULL,
-                                             choices = setNames(df_full$name[order(df_full$pos_number)], 
-                                                                df_full$full_name[order(df_full$pos_number)]),
-                                             selected = df_full$name[order(df_full$pos_number)])
+                                             choices = setNames(df$name[df$location_collapsed == "Ocean"], 
+                                                                df_full$full_name[match(df$name[df$location_collapsed == "Ocean"], df_full$name)]),
+                                             selected = df$name[df$location_collapsed == "Ocean"])
+                 ),
+                 
+                 # All Fish Tab (River + Pond + Ocean, ordered by pos_number)
+                 tabPanel("All Fish",
+                          br(),
+                          fluidRow(
+                            column(6, actionButton("select_all_allfish", "Select All", 
+                                                   class = "btn-default btn-sm")),
+                            column(6, actionButton("deselect_all_allfish", "Deselect All", 
+                                                   class = "btn-default btn-sm"))
+                          ),
+                          br(),
+                          checkboxGroupInput("allfish_selection", 
+                                             NULL,
+                                             choices = {
+                                               fish_only <- df_full[df_full$location_collapsed %in% c("River", "Pond", "Ocean"), ]
+                                               fish_ordered <- fish_only[order(fish_only$pos_number), ]
+                                               setNames(fish_ordered$name, fish_ordered$full_name)
+                                             },
+                                             selected = {
+                                               fish_only <- df_full[df_full$location_collapsed %in% c("River", "Pond", "Ocean"), ]
+                                               fish_ordered <- fish_only[order(fish_only$pos_number), ]
+                                               fish_ordered$name
+                                             })
+                 ),
+                 
+                 # Insect Tab
+                 tabPanel("Insect",
+                          br(),
+                          fluidRow(
+                            column(6, actionButton("select_all_insect", "Select All", 
+                                                   class = "btn-default btn-sm")),
+                            column(6, actionButton("deselect_all_insect", "Deselect All", 
+                                                   class = "btn-default btn-sm"))
+                          ),
+                          br(),
+                          checkboxGroupInput("insect_selection", 
+                                             NULL,
+                                             choices = setNames(df$name[df$location_collapsed == "Insect"], 
+                                                                df_full$full_name[match(df$name[df$location_collapsed == "Insect"], df_full$name)]),
+                                             selected = df$name[df$location_collapsed == "Insect"])
+                 ),
+                 
+                 # Sea Creature Tab
+                 tabPanel("Sea Creature",
+                          br(),
+                          fluidRow(
+                            column(6, actionButton("select_all_seacreature", "Select All", 
+                                                   class = "btn-default btn-sm")),
+                            column(6, actionButton("deselect_all_seacreature", "Deselect All", 
+                                                   class = "btn-default btn-sm"))
+                          ),
+                          br(),
+                          checkboxGroupInput("seacreature_selection", 
+                                             NULL,
+                                             choices = setNames(df$name[df$location_collapsed == "Sea Creature"], 
+                                                                df_full$full_name[match(df$name[df$location_collapsed == "Sea Creature"], df_full$name)]),
+                                             selected = df$name[df$location_collapsed == "Sea Creature"])
                  )
                )
            )
@@ -376,11 +420,11 @@ ui <- fluidPage(
                           class = "placeholder-content",
                           style = "text-align: center; padding: 50px;",
                           h5("Run optimization to see results"),
-                          p("Select fish from the left panel and configure optimization parameters below, then click 'Optimize Fish Catching' to generate schedules.")
+                          p("Select creatures from the left panel and configure optimization parameters below, then click 'Optimize Fish Catching' to generate schedules.")
                         )
                       ),
                       
-                      # Results tables - SIMPLIFIED STRUCTURE
+                      # Results tables - UPDATED STRUCTURE
                       conditionalPanel(
                         condition = "output.analysis_complete == true",
                         
@@ -390,21 +434,50 @@ ui <- fluidPage(
                           
                           tabPanel("River Schedule",
                                    br(),
+                                   p(style = "color: #606c38; font-style: italic;", 
+                                     "Optimal fishing times for river fish. Values show catch probabilities (0-1)."),
                                    DT::dataTableOutput("river_table")
-                          ),
-                          
-                          tabPanel("Ocean Schedule",
-                                   br(),
-                                   DT::dataTableOutput("ocean_table")
                           ),
                           
                           tabPanel("Pond Schedule",
                                    br(),
+                                   p(style = "color: #606c38; font-style: italic;", 
+                                     "Optimal fishing times for pond fish. Values show catch probabilities (0-1)."),
                                    DT::dataTableOutput("pond_table")
+                          ),
+                          
+                          tabPanel("Ocean Schedule",
+                                   br(),
+                                   p(style = "color: #606c38; font-style: italic;", 
+                                     "Optimal fishing times for ocean fish. Values show catch probabilities (0-1)."),
+                                   DT::dataTableOutput("ocean_table")
+                          ),
+                          
+                          tabPanel("All Fish Schedule",
+                                   br(),
+                                   p(style = "color: #606c38; font-style: italic;", 
+                                     "All fish (River, Pond, Ocean) in optimal order. Values show catch probabilities (0-1)."),
+                                   DT::dataTableOutput("allfish_table")
+                          ),
+                          
+                          tabPanel("Insect Schedule",
+                                   br(),
+                                   p(style = "color: #606c38; font-style: italic;", 
+                                     "Optimal catching times for insects. Values show catch probabilities (0-1)."),
+                                   DT::dataTableOutput("insect_table")
+                          ),
+                          
+                          tabPanel("Sea Creature Schedule",
+                                   br(),
+                                   p(style = "color: #606c38; font-style: italic;", 
+                                     "Optimal catching times for sea creatures. Values show catch probabilities (0-1)."),
+                                   DT::dataTableOutput("seacreature_table")
                           ),
                           
                           tabPanel("Critterpedia Schedule",
                                    br(),
+                                   p(style = "color: #606c38; font-style: italic;", 
+                                     "All selected creatures in Critterpedia order with type classification."),
                                    DT::dataTableOutput("critterpedia_table")
                           )
                         )
@@ -561,81 +634,102 @@ server <- function(input, output, session) {
     }, delay = 0.1)
   }
   
-  # CRITTERPEDIA SELECT/DESELECT BUTTONS
-  observeEvent(input$select_all_critterpedia, {
-    all_fish <- df_full$name[order(df_full$pos_number)]
-    safe_update("critterpedia_fish", all_fish)
+  # ALL FISH SELECT/DESELECT BUTTONS  
+  observeEvent(input$select_all_allfish, {
+    fish_only <- df_full[df_full$location_collapsed %in% c("River", "Pond", "Ocean"), ]
+    fish_ordered <- fish_only[order(fish_only$pos_number), ]
+    all_fish <- fish_ordered$name
     
-    # Also update location tabs
+    safe_update("allfish_selection", all_fish)
     safe_update("river_fish", df$name[df$location_collapsed == "River"])
-    safe_update("ocean_fish", df$name[df$location_collapsed == "Ocean"])
     safe_update("pond_fish", df$name[df$location_collapsed == "Pond"])
+    safe_update("ocean_fish", df$name[df$location_collapsed == "Ocean"])
   })
   
-  observeEvent(input$deselect_all_critterpedia, {
-    safe_update("critterpedia_fish", character(0))
+  observeEvent(input$deselect_all_allfish, {
+    safe_update("allfish_selection", character(0))
     safe_update("river_fish", character(0))
-    safe_update("ocean_fish", character(0))
     safe_update("pond_fish", character(0))
+    safe_update("ocean_fish", character(0))
   })
   
-  # LOCATION SELECT/DESELECT BUTTONS  
+  # INSECT SELECT/DESELECT BUTTONS  
+  observeEvent(input$select_all_insect, {
+    insect_creatures <- df$name[df$location_collapsed == "Insect"]
+    safe_update("insect_selection", insect_creatures)
+  })
+  
+  observeEvent(input$deselect_all_insect, {
+    safe_update("insect_selection", character(0))
+  })
+  
+  # SEA CREATURE SELECT/DESELECT BUTTONS  
+  observeEvent(input$select_all_seacreature, {
+    sea_creatures <- df$name[df$location_collapsed == "Sea Creature"]
+    safe_update("seacreature_selection", sea_creatures)
+  })
+  
+  observeEvent(input$deselect_all_seacreature, {
+    safe_update("seacreature_selection", character(0))
+  })
+  # RIVER SELECT/DESELECT BUTTONS - UPDATED
   observeEvent(input$select_all_river, {
     river_fish <- df$name[df$location_collapsed == "River"]
     safe_update("river_fish", river_fish)
     
-    # Update critterpedia to include these fish
-    current_critterpedia <- isolate(input$critterpedia_fish)
-    new_critterpedia <- unique(c(current_critterpedia, river_fish))
-    safe_update("critterpedia_fish", new_critterpedia)
+    # Update allfish to include these fish
+    current_allfish <- isolate(input$allfish_selection)
+    new_allfish <- unique(c(current_allfish, river_fish))
+    safe_update("allfish_selection", new_allfish)
   })
   
   observeEvent(input$deselect_all_river, {
     river_fish <- df$name[df$location_collapsed == "River"]
     safe_update("river_fish", character(0))
     
-    # Remove river fish from critterpedia
-    current_critterpedia <- isolate(input$critterpedia_fish)
-    new_critterpedia <- setdiff(current_critterpedia, river_fish)
-    safe_update("critterpedia_fish", new_critterpedia)
+    # Remove river fish from allfish
+    current_allfish <- isolate(input$allfish_selection)
+    new_allfish <- setdiff(current_allfish, river_fish)
+    safe_update("allfish_selection", new_allfish)
   })
   
-  observeEvent(input$select_all_ocean, {
-    ocean_fish <- df$name[df$location_collapsed == "Ocean"]
-    safe_update("ocean_fish", ocean_fish)
-    
-    current_critterpedia <- isolate(input$critterpedia_fish)
-    new_critterpedia <- unique(c(current_critterpedia, ocean_fish))
-    safe_update("critterpedia_fish", new_critterpedia)
-  })
-  
-  observeEvent(input$deselect_all_ocean, {
-    ocean_fish <- df$name[df$location_collapsed == "Ocean"]
-    safe_update("ocean_fish", character(0))
-    
-    current_critterpedia <- isolate(input$critterpedia_fish)
-    new_critterpedia <- setdiff(current_critterpedia, ocean_fish)
-    safe_update("critterpedia_fish", new_critterpedia)
-  })
-  
+  # POND SELECT/DESELECT BUTTONS - UPDATED
   observeEvent(input$select_all_pond, {
     pond_fish <- df$name[df$location_collapsed == "Pond"]
     safe_update("pond_fish", pond_fish)
     
-    current_critterpedia <- isolate(input$critterpedia_fish)
-    new_critterpedia <- unique(c(current_critterpedia, pond_fish))
-    safe_update("critterpedia_fish", new_critterpedia)
+    current_allfish <- isolate(input$allfish_selection)
+    new_allfish <- unique(c(current_allfish, pond_fish))
+    safe_update("allfish_selection", new_allfish)
   })
   
   observeEvent(input$deselect_all_pond, {
     pond_fish <- df$name[df$location_collapsed == "Pond"]
     safe_update("pond_fish", character(0))
     
-    current_critterpedia <- isolate(input$critterpedia_fish)
-    new_critterpedia <- setdiff(current_critterpedia, pond_fish)
-    safe_update("critterpedia_fish", new_critterpedia)
+    current_allfish <- isolate(input$allfish_selection)
+    new_allfish <- setdiff(current_allfish, pond_fish)
+    safe_update("allfish_selection", new_allfish)
   })
   
+  # OCEAN SELECT/DESELECT BUTTONS - UPDATED  
+  observeEvent(input$select_all_ocean, {
+    ocean_fish <- df$name[df$location_collapsed == "Ocean"]
+    safe_update("ocean_fish", ocean_fish)
+    
+    current_allfish <- isolate(input$allfish_selection)
+    new_allfish <- unique(c(current_allfish, ocean_fish))
+    safe_update("allfish_selection", new_allfish)
+  })
+  
+  observeEvent(input$deselect_all_ocean, {
+    ocean_fish <- df$name[df$location_collapsed == "Ocean"]
+    safe_update("ocean_fish", character(0))
+    
+    current_allfish <- isolate(input$allfish_selection)
+    new_allfish <- setdiff(current_allfish, ocean_fish)
+    safe_update("allfish_selection", new_allfish)
+  })
   # BIDIRECTIONAL SYNCHRONIZATION (with proper debouncing)
   
   # Sync: Location tabs → Critterpedia
@@ -683,28 +777,32 @@ server <- function(input, output, session) {
   }, ignoreInit = TRUE)
   
   
-  # Reactive expression for filtered data
+  ## Reactive expression for filtered data - UPDATED FOR 5 LOCATIONS
   filtered_data <- reactive({
-    # Combine all selected fish from all tabs
-    selected_fish <- c(input$river_fish, input$ocean_fish, 
-                       input$pond_fish, input$critterpedia_fish)
+    # Combine all selected creatures from all tabs
+    selected_creatures <- c(input$river_fish, input$pond_fish, input$ocean_fish, 
+                            input$allfish_selection, input$insect_selection, 
+                            input$seacreature_selection)
     # Remove duplicates
-    selected_fish <- unique(selected_fish)
+    selected_creatures <- unique(selected_creatures)
     
-    if (length(selected_fish) == 0) {
-      return(data.frame()) # Return empty dataframe if no fish selected
+    if (length(selected_creatures) == 0) {
+      return(data.frame()) # Return empty dataframe if no creatures selected
     }
     
     # Use df to ensure we have the right columns
-    filtered_df <- df[df$name %in% selected_fish, ]
+    filtered_df <- df[df$name %in% selected_creatures, ]
     return(filtered_df)
   })
   
-  
   # Reactive values to store schedule data
+  # Reactive values to store schedule data - UPDATED
   river_schedule <- reactiveVal(data.frame())
-  ocean_schedule <- reactiveVal(data.frame())
   pond_schedule <- reactiveVal(data.frame())
+  ocean_schedule <- reactiveVal(data.frame())
+  allfish_schedule <- reactiveVal(data.frame())
+  insect_schedule <- reactiveVal(data.frame())
+  seacreature_schedule <- reactiveVal(data.frame())
   critterpedia_schedule <- reactiveVal(data.frame())
   
   # Handle button click for fish catching optimization
@@ -765,33 +863,39 @@ server <- function(input, output, session) {
         wide_format = TRUE
       )
       
-      # Split schedule by location and remove location_collapsed column
-      river_data <- schedule[schedule$name %in% df$name[df$location == "River"], ]
-      ocean_data <- schedule[schedule$name %in% df$name[df$location == "Ocean"], ]
-      pond_data <- schedule[schedule$name %in% df$name[df$location == "Pond"], ]
+      # Split schedule by location and remove location_collapsed column - UPDATED
+      river_data <- schedule[schedule$name %in% df$name[df$location_collapsed == "River"], ]
+      pond_data <- schedule[schedule$name %in% df$name[df$location_collapsed == "Pond"], ]
+      ocean_data <- schedule[schedule$name %in% df$name[df$location_collapsed == "Ocean"], ]
+      insect_data <- schedule[schedule$name %in% df$name[df$location_collapsed == "Insect"], ]
+      seacreature_data <- schedule[schedule$name %in% df$name[df$location_collapsed == "Sea Creature"], ]
       
-      # Remove location_collapsed column from all tables
+      # All Fish data (River + Pond + Ocean, ordered by pos_number)
+      allfish_data <- schedule[schedule$name %in% df$name[df$location_collapsed %in% c("River", "Pond", "Ocean")], ]
+      
+      # Remove location_collapsed column from individual location tables
       if("location_collapsed" %in% names(river_data)) river_data <- river_data[, !names(river_data) %in% "location_collapsed"]
-      if("location_collapsed" %in% names(ocean_data)) ocean_data <- ocean_data[, !names(ocean_data) %in% "location_collapsed"]
       if("location_collapsed" %in% names(pond_data)) pond_data <- pond_data[, !names(pond_data) %in% "location_collapsed"]
+      if("location_collapsed" %in% names(ocean_data)) ocean_data <- ocean_data[, !names(ocean_data) %in% "location_collapsed"]
+      if("location_collapsed" %in% names(allfish_data)) allfish_data <- allfish_data[, !names(allfish_data) %in% "location_collapsed"]
+      if("location_collapsed" %in% names(insect_data)) insect_data <- insect_data[, !names(insect_data) %in% "location_collapsed"]
+      if("location_collapsed" %in% names(seacreature_data)) seacreature_data <- seacreature_data[, !names(seacreature_data) %in% "location_collapsed"]
       
-      # Replace name column with full_name for display
-      if("name" %in% names(river_data) && "full_name" %in% names(river_data)) {
-        river_data$name <- river_data$full_name
-        river_data <- river_data[, !names(river_data) %in% "full_name"]
-      }
-      if("name" %in% names(ocean_data) && "full_name" %in% names(ocean_data)) {
-        ocean_data$name <- ocean_data$full_name
-        ocean_data <- ocean_data[, !names(ocean_data) %in% "full_name"]
-      }
-      if("name" %in% names(pond_data) && "full_name" %in% names(pond_data)) {
-        pond_data$name <- pond_data$full_name
-        pond_data <- pond_data[, !names(pond_data) %in% "full_name"]
+      # Replace name column with full_name for display in individual location tables
+      for(data_name in c("river_data", "pond_data", "ocean_data", "allfish_data", "insect_data", "seacreature_data")) {
+        data_obj <- get(data_name)
+        if("name" %in% names(data_obj) && "full_name" %in% names(data_obj)) {
+          data_obj$name <- data_obj$full_name
+          data_obj <- data_obj[, !names(data_obj) %in% "full_name"]
+          assign(data_name, data_obj)
+        }
       }
       
-      # Create critterpedia order table (sorted by pos_number)
+      # Create critterpedia order table (all creatures, sorted by pos_number, WITH location_collapsed as "Type")
       critterpedia_data <- schedule
+      # Keep location_collapsed but rename it to "Type"
       if("location_collapsed" %in% names(critterpedia_data)) {
+        critterpedia_data$Type <- critterpedia_data$location_collapsed
         critterpedia_data <- critterpedia_data[, !names(critterpedia_data) %in% "location_collapsed"]
       }
       # Replace name column with full_name for display
@@ -800,20 +904,24 @@ server <- function(input, output, session) {
         critterpedia_data <- critterpedia_data[, !names(critterpedia_data) %in% "full_name"]
       }
       
-      # Create a mapping from fish names to pos_numbers
+      # Sort critterpedia_data by pos_number
       name_to_pos <- setNames(df_full$pos_number, df_full$name)
-      
-      # Get pos_numbers for fish in our schedule (using original names before display transformation)
       original_names <- schedule$name
       pos_numbers <- name_to_pos[original_names]
-      
-      # Sort critterpedia_data by pos_number
       critterpedia_data <- critterpedia_data[order(pos_numbers, na.last = TRUE), ]
       
-      # Update the schedule data
+      # Sort allfish_data by pos_number too
+      allfish_original_names <- schedule$name[schedule$name %in% df$name[df$location_collapsed %in% c("River", "Pond", "Ocean")]]
+      allfish_pos_numbers <- name_to_pos[allfish_original_names]
+      allfish_data <- allfish_data[order(allfish_pos_numbers, na.last = TRUE), ]
+      
+      # Update all the schedule data
       river_schedule(river_data)
-      ocean_schedule(ocean_data)
       pond_schedule(pond_data)
+      ocean_schedule(ocean_data)
+      allfish_schedule(allfish_data)
+      insect_schedule(insect_data)
+      seacreature_schedule(seacreature_data)
       critterpedia_schedule(critterpedia_data)
       
       # Mark analysis as complete
@@ -827,15 +935,17 @@ server <- function(input, output, session) {
           paste("- Total draws:", input$N),
           paste("- Exploration Weight:", input$exploration_weight),
           paste("- Minimization Weight:", input$column_minimization_weight),
-          paste("- Emergency Brake:", input$emergency_brake),  # ADD THIS LINE
+          paste("- Emergency Brake:", input$emergency_brake),
           paste(""),
           paste("Results:"),
-          paste("- Total fish caught:", nrow(current_data)),
+          paste("- Total creatures caught:", nrow(current_data)),
           paste("- River fish:", nrow(river_data)),
-          paste("- Ocean fish:", nrow(ocean_data)), 
-          paste("- Pond fish:", nrow(pond_data)),
+          paste("- Pond fish:", nrow(pond_data)), 
+          paste("- Ocean fish:", nrow(ocean_data)),
+          paste("- Insects:", nrow(insect_data)),
+          paste("- Sea creatures:", nrow(seacreature_data)),
           paste("- Optimal times selected:", length(optimal_times)),
-          paste("- Success rate:", round(result$summary_stats$success_rate * 100, 1), "%"),  # ADD THIS LINE
+          paste("- Success rate:", round(result$summary_stats$success_rate * 100, 1), "%"),
           sep = "\n"
         )
       })
@@ -880,7 +990,31 @@ server <- function(input, output, session) {
     }
   })
   
-  # Render the critterpedia table with 80 entries per page
+  output$allfish_table <- DT::renderDataTable({
+    if (nrow(allfish_schedule()) > 0) {
+      DT::datatable(allfish_schedule(), 
+                    options = list(pageLength = 80, scrollX = TRUE),
+                    rownames = FALSE)
+    }
+  })
+  
+  output$insect_table <- DT::renderDataTable({
+    if (nrow(insect_schedule()) > 0) {
+      DT::datatable(insect_schedule(), 
+                    options = list(pageLength = 80, scrollX = TRUE),
+                    rownames = FALSE)
+    }
+  })
+  
+  output$seacreature_table <- DT::renderDataTable({
+    if (nrow(seacreature_schedule()) > 0) {
+      DT::datatable(seacreature_schedule(), 
+                    options = list(pageLength = 80, scrollX = TRUE),
+                    rownames = FALSE)
+    }
+  })
+  
+  # Update the critterpedia table to show the Type column
   output$critterpedia_table <- DT::renderDataTable({
     if (nrow(critterpedia_schedule()) > 0) {
       DT::datatable(critterpedia_schedule(), 

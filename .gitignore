@@ -6,3 +6,5 @@
 educational_app.r
 
 educational_functions.r
+
+*.dcf
