@@ -1,0 +1,163 @@
+---
+title: "default"
+output: html_document
+date: "2025-06-04"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+```{r packages}
+library(tidyverse)
+library(psych)
+library(patchwork)
+library(here)
+library(brms)
+library(tidybayes)
+library(papaja)
+```
+
+```{r figure presets, include = FALSE}
+knitr::opts_chunk$set(fig.retina=3, echo=TRUE)
+theme_set(theme_cowplot())
+default_palettes <- list(
+  c("#5e8485" , "#0f393a") ,
+  c("#1c5253" , "#5e8485" , "#0f393a") , 
+  # palette with 5 colours
+ c( "#1c5253" , "#e07a5f", "#f2cc8f" , "#81b29a" , "#3d405b" ) ,
+  # same palette interpolated to 8 colours
+ c( "#1c5253" , "#e07a5f", "#f2cc8f" , "#81b29a" , "#3d405b" , "#a7a844" , "#69306d" ) 
+  
+)
+
+options(ggplot2.discrete.fill = default_palettes, 
+        ggplot2.discrete.colour = default_palettes)
+```
+
+```{r}
+df <- rio::import("data/critter.xlsx", which = "combo") %>% 
+  janitor::clean_names()
+df <- df[,1:51]
+
+d <- rio::import("data/fish_simple.csv")
+```
+
+```{r}
+x <- df %>% 
+  select(name:catches)
+df_short <- df %>% 
+  select(-c(name:catches))
+
+y <- data.frame(do.call(cbind, rep(df_short, each=5)), check.names = F)
+
+datetimes <- names(d[,4:291])
+
+morning_4am_9am <- 
+  do.call(cbind, rep(select(df, starts_with("morning_4am_9am")) , each=5)) %>% 
+  as_tibble()
+
+daytime_9am_4pm <- 
+  do.call(cbind, rep(select(df, starts_with("daytime_9am_4pm")) , each=7)) %>% 
+  as_tibble()
+
+evening_4pm_9pm <- 
+  do.call(cbind, rep(select(df, starts_with("evening_4pm_9pm")) , each=5)) %>% 
+  as_tibble()
+
+night_9pm_4am <- 
+  do.call(cbind, rep(select(df, starts_with("night_9pm_4am")) , each=7)) %>% 
+  as_tibble()
+
+```
+
+
+```{r}
+months <- c("January", "February", "March", "April",
+            "May", "June", "July", "August",
+            "September", "October", "November", "December")
+five <- expand.grid(c(4:8), months)
+seven <- expand.grid(c(9, 10, 11, 12, 1, 2, 3), months)
+
+seven$daytime <- c("am", "am", "am", "pm", "pm", "pm", "pm")
+seven$night <- c("pm", "pm", "pm", "am", "am", "am", "am")
+
+
+names(morning_4am_9am) <- paste0(five$Var2, "x", five$Var1, "_00am")
+names(evening_4pm_9pm) <- paste0(five$Var2, "x", five$Var1, "_00pm")
+
+names(daytime_9am_4pm) <- paste0(seven$Var2, "x", seven$Var1, "_00", seven$daytime)
+
+names(night_9pm_4am) <- paste0(seven$Var2, "x", seven$Var1, "_00", seven$night)
+
+correct_names <-tibble(morning_4am_9am, daytime_9am_4pm, evening_4pm_9pm, night_9pm_4am) 
+
+
+correct_names <- correct_names %>% 
+  mutate(
+    name = df$name,
+    location_collapsed = df$type,
+    name_short = gsub("[^[:alnum:] ]", "", name),
+    name_short = gsub(" ", "", name_short),
+    name_short = str_to_lower(name_short)
+  ) %>% 
+  select(name, location_collapsed, everything())
+
+
+```
+
+```{r}
+bugnumbers <- rio::import("data/critter.xlsx", which = "bug_numbers") %>% 
+  select(-Location)
+seacreaturenumbers <- rio::import("data/critter.xlsx", which = "seacreature_numbers")
+
+names(bugnumbers) <- c("pos_num", "name", "value")
+names(seacreaturenumbers) <- c("pos_num", "name", "value")
+
+pos_nums <- rbind(bugnumbers, seacreaturenumbers)
+
+pos_nums <- pos_nums %>% 
+  mutate(
+    name_short = gsub("[^[:alnum:] ]", "", name),
+    name_short = gsub(" ", "", name_short),
+    name_short = str_to_lower(name_short),
+    pos_number = pos_num
+  ) %>% 
+  select(-c(name, pos_num))
+```
+
+```{r}
+x <- left_join(correct_names, pos_nums, by = "name_short") %>% 
+  select(-name_short)
+
+x <- x %>% 
+  select(name, location_collapsed, pos_number, value, everything()) %>% 
+  select(-value)
+
+full_dat <- rbind(d, x)
+names(d)
+```
+
+```{r}
+write_csv(full_dat, "data/data.csv")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
